@@ -1,0 +1,61 @@
+{
+    "interactionModel": {
+        "languageModel": {
+            "invocationName": "ビンゴ大会",
+            "intents": [
+                {
+                    "name": "AMAZON.CancelIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.HelpIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.StopIntent",
+                    "samples": []
+                },
+                {
+                    "name": "PreviousIntent",
+                    "slots": [],
+                    "samples": [
+                        "読み上げ",
+                        "出た数を教えて",
+                        "今までの数字を教えて",
+                        "読み上げて"
+                    ]
+                },
+                {
+                    "name": "StartIntent",
+                    "slots": [],
+                    "samples": [
+                        "次いってみよー",
+                        "次行ってみよ",
+                        "スタート",
+                        "ビンゴスタート",
+                        "次",
+                        "次をお願い",
+                        "次 出して"
+                    ]
+                },
+                {
+                    "name": "AMAZON.YesIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.NoIntent",
+                    "samples": []
+                },
+                {
+                    "name": "InitIntent",
+                    "slots": [],
+                    "samples": [
+                        "初期化",
+                        "初期化して"
+                    ]
+                }
+            ],
+            "types": []
+        }
+    }
+}

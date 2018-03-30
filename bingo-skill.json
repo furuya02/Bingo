@@ -1,0 +1,43 @@
+{
+  "manifest": {
+    "publishingInformation": {
+      "locales": {
+        "ja-JP": {
+          "summary": "このスキルを使用してビンゴゲームを開始できます。",
+          "examplePhrases": [
+            "アレクサ、ビンゴ大会をスタートして",
+            "ビンゴスタート",
+            "読み上げ"
+          ],
+          "keywords": [
+            "ビンゴ"
+          ],
+          "name": "ビンゴ大会",
+          "smallIconUri": "https://s3.amazonaws.com/CAPS-SSE/echo_developer/75a6/e6d6f17cea5a45c69abb52953244c6da/APP_ICON?versionId=afTi5L7dYeyQbUGYmZt32_bIUk5haVPq&AWSAccessKeyId=AKIAI3X6PUXD7CU5F5BQ&Expires=1522538545&Signature=NwTwA%2F7dOrPvB0Fp2EzRsJiYtYY%3D",
+          "description": "このスキルを使用してビンゴゲームを開始できます。\n\n「ビンゴスタート」などと言うと、順次、ランダムに数を言ってくれます。また、いつでも「読み上げ」と言うと、今までに出た数を確認できます。\n\nゲームは、記録されており、次回呼び出した時も、ゲームの続きになっています。\nゲームを最初から行う場合は、「初期化して」と言って下さい。",
+          "largeIconUri": "https://s3.amazonaws.com/CAPS-SSE/echo_developer/b14e/6b28f27a0c8e4bb7ad90985b1e9e98fd/APP_ICON_LARGE?versionId=7b9u5GkwGORMVIcOQInoMM6g6b5lN2Rj&AWSAccessKeyId=AKIAI3X6PUXD7CU5F5BQ&Expires=1522538545&Signature=81k%2FnCazqtR5%2B8SImOYNLJHUF6Y%3D"
+        }
+      },
+      "isAvailableWorldwide": true,
+      "testingInstructions": "「アレクサ、ビンゴ大会をスタートして」開始します。\n「次へ」、「スタート」などで、次の番号が出ます。\n「読み上げ」と言うと、それまで出た数字を聞くことが出来ます。\nビンゴゲームを始める前に、「初期化」と言って、今までに出た数字を初期化して使用します。",
+      "category": "GAMES",
+      "distributionCountries": []
+    },
+    "apis": {
+      "custom": {
+        "endpoint": {
+          "uri": "arn:aws:lambda:us-east-1:275317300001:function:bingo_skill"
+        },
+        "interfaces": []
+      }
+    },
+    "manifestVersion": "1.0",
+    "privacyAndCompliance": {
+      "allowsPurchases": false,
+      "isExportCompliant": true,
+      "containsAds": false,
+      "isChildDirected": false,
+      "usesPersonalInfo": false
+    }
+  }
+}

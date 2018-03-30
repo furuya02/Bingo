@@ -1,0 +1,9 @@
+{
+  "name": "bingo",
+  "description": "bingo",
+  "memory": 128,
+  "timeout": 5,
+  "role": "arn:aws:iam::275317300001:role/bingo_lambda_function",
+  "handler": "index.handler",
+  "environment": {}
+}
