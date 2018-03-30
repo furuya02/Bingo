@@ -1,0 +1,2 @@
+# Bingo
+ビンゴスキル for Alexa
