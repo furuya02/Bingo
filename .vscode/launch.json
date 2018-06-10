@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "デバッグ実行",
+            "program": "${workspaceRoot}/.vscode/drive.js",
+            "runtimeVersion": "8.10.0",
+            //"handler": "index.handle",
+            "args": [
+                "param.js"
+            ]
+        }
+    ]
+}
