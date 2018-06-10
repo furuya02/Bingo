@@ -1,8 +1,9 @@
 {
-  "name": "bingo",
-  "description": "bingo",
+  "name": "bingo_v2",
+  "description": "bingo_v2",
   "memory": 128,
   "timeout": 5,
+  "runtime": "nodejs8.10",
   "role": "arn:aws:iam::275317300001:role/bingo_lambda_function",
   "handler": "index.handler",
   "environment": {}

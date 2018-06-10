@@ -41,13 +41,25 @@ let skill;
 //非常に移植もスムーズです。
 // 恐らく JavaScript -> JavaScriptより安全に移行できたかも知れません。
 // ちょっとバージョンアップ
+//AgainIntent
+// alexを使っている場合
+// {
+// 	"name": "bingo_v2",
+// 	"description": "bingo_v2",
+// 	"memory": 128,
+// 	"timeout": 5,
+// 	"runtime": "nodejs8.10",
+// 	"role": "arn:aws:iam::275317300001:role/bingo_lambda_function",
+// 	"handler": "index.handler",
+// 	"environment": {}
+//   }
 const sleep = '<break time="500ms"/>';
 exports.handler = function (event, context) {
     return __awaiter(this, void 0, void 0, function* () {
         console.log(JSON.stringify(event));
         if (!skill) {
             skill = Alexa.SkillBuilders.standard()
-                .addRequestHandlers(LaunchRequestHandler, InitIntentHandler, StartIntentHandler, YesIntentHandler, NoIntentHandler, HelpIntentHandler, StopIntentHandler, CancelIntentHandler, SessionEndedRequestHandler)
+                .addRequestHandlers(LaunchRequestHandler, InitIntentHandler, StartIntentHandler, AgainIntentHandler, YesIntentHandler, NoIntentHandler, HelpIntentHandler, StopIntentHandler, CancelIntentHandler, SessionEndedRequestHandler)
                 .addErrorHandlers(ErrorHandler)
                 .withTableName('BingoTableV2') // これを追加（テーブル名）
                 .withAutoCreateTable(true) //テーブル作成もスキルから行う場合は、これも追加
@@ -99,6 +111,7 @@ const StartIntentHandler = {
             let array = attributes.array;
             let index = attributes.index;
             let counter = Number(attributes.counter);
+            attributes.last = array[index]; // 最後に出た数字を記憶する
             let speechText = drumMessage() + exclamationMessage();
             speechText += '次の数字は、' + sleep + array[index] + 'です。' + sleep;
             index += 1;
@@ -112,6 +125,28 @@ const StartIntentHandler = {
             attributes.index = index;
             attributes.counter = counter;
             yield setAttrbutes(handlerInput, attributes); // 保存
+            return handlerInput.responseBuilder
+                .speak(speechText)
+                .reprompt(guideMessage())
+                .getResponse();
+        });
+    }
+};
+const AgainIntentHandler = {
+    canHandle(handlerInput) {
+        return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+            && handlerInput.requestEnvelope.request.intent.name === 'AgainIntent';
+    },
+    handle(handlerInput) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let attributes = yield getAttrbutes(handlerInput); // 取得
+            let speechText = '';
+            if (attributes.last) {
+                speechText += '最後に出た数字は、' + sleep + attributes.last + 'です。' + sleep;
+            }
+            else {
+                speechText += 'まだ、一回も数字が出ていません';
+            }
             return handlerInput.responseBuilder
                 .speak(speechText)
                 .reprompt(guideMessage())
@@ -159,7 +194,7 @@ const YesIntentHandler = {
                     speechText += '以上です。';
                 }
                 else {
-                    speechText += 'まだ、出た数字はありません。';
+                    speechText += '現在までに出た数字は、ありません。';
                 }
                 speechText += guideMessage();
                 attributes.counter = 0;

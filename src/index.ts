@@ -44,6 +44,23 @@ let skill: Alexa.Skill;
 // 恐らく JavaScript -> JavaScriptより安全に移行できたかも知れません。
 
 // ちょっとバージョンアップ
+//AgainIntent
+// もう一回言って
+// もう一回
+//最後に出た数字は？
+
+// alexを使っている場合
+// {
+// 	"name": "bingo_v2",
+// 	"description": "bingo_v2",
+// 	"memory": 128,
+// 	"timeout": 5,
+// 	"runtime": "nodejs8.10",
+// 	"role": "arn:aws:iam::275317300001:role/bingo_lambda_function",
+// 	"handler": "index.handler",
+// 	"environment": {}
+//   }
+  
  
 
 const sleep = '<break time="500ms"/>';
@@ -56,6 +73,7 @@ exports.handler = async function (event: RequestEnvelope, context: any) {
 				LaunchRequestHandler,
 				InitIntentHandler,
 				StartIntentHandler,
+				AgainIntentHandler,
 				YesIntentHandler,
 				NoIntentHandler,
 				HelpIntentHandler,
@@ -118,6 +136,8 @@ const StartIntentHandler: Alexa.RequestHandler = {
 		let index = attributes.index;
 		let counter = Number(attributes.counter);
 
+		attributes.last = array[index]; // 最後に出た数字を記憶する
+
 		let speechText = drumMessage() + exclamationMessage();
 		speechText += '次の数字は、' + sleep + array[index] + 'です。' + sleep;
 		index += 1;
@@ -130,6 +150,27 @@ const StartIntentHandler: Alexa.RequestHandler = {
 		attributes.index = index;
 		attributes.counter = counter;
 		await setAttrbutes(handlerInput, attributes); // 保存
+	
+		return handlerInput.responseBuilder
+			.speak(speechText)
+			.reprompt(guideMessage())
+			.getResponse();
+	}
+};
+
+const AgainIntentHandler: Alexa.RequestHandler = {
+	canHandle(handlerInput: Alexa.HandlerInput) {
+		return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+			&& handlerInput.requestEnvelope.request.intent.name === 'AgainIntent';
+	},
+	async handle(handlerInput: Alexa.HandlerInput) {
+		let attributes = await getAttrbutes(handlerInput); // 取得
+		let speechText = '';
+		if( attributes.last) {
+			speechText += '最後に出た数字は、' + sleep + attributes.last + 'です。' + sleep;
+		} else {
+			speechText += 'まだ、一回も数字が出ていません';
+		}
 	
 		return handlerInput.responseBuilder
 			.speak(speechText)
