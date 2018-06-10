@@ -39,5 +39,5 @@ function failCallback(error) {
 }
 
 var index = require(`../functions/skill/index.js`);
-index.handle(param.event, context)
+index.handler(param.event, context)
 .then(successCallback, failCallback);

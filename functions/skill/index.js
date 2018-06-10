@@ -10,20 +10,47 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const Alexa = require("ask-sdk");
 let skill;
-const states = {
-    GAME: '_GAME',
-    INIT: '_INIT'
-};
-const keyCounter = 'counter';
-const keyArray = 'array';
-const keyIndex = 'index';
+// ■大きく変わったのはステートとアトリビュートの実装
+// ステートの扱い方
+// ステートによって処理が違うのは、AMAZON.YesIntentだけなので、
+//YesIntentは、STATEによって違うハンドラを用意する　共に最後にSTATは消しておく
+//InitIntentでstates.INITを入れる
+// Stop Cancel Helpなどステートごとに複数書いていたハンドラは全部共通化しました。
+// セッションアトリビュートの扱い
+// 計画に別れた
+// // 永続化情報の取得
+// async function getAttrbutes(handlerInput: Alexa.HandlerInput):Promise<{[key: string]: any}> {
+// 	return await handlerInput.attributesManager.getPersistentAttributes();
+// }
+// // 永続化情報の保存
+// async function setAttrbutes(handlerInput: Alexa.HandlerInput, attributes:{[key: string]: any}): Promise<void> {
+// 	handlerInput.attributesManager.setPersistentAttributes(attributes);
+// 	await handlerInput.attributesManager.savePersistentAttributes();
+// }
+// 下記で挟む
+// let attributes = await getAttrbutes(handlerInput); // 取得
+// await setAttrbutes(handlerInput, attributes); // 保存
+// STATEだけセッション情報にした
+// let sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+// sessionAttributes.state = 'INIT';
+// handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
+// 変数名の間違いがエラーとなるのはもちろん
+//未使用の変数や関数でワーニング表示されたり
+//型の不一致がエラーとなったり
+// null undefinedとなる可能性のあるデータを参照していたりするとワーニングが発生する
+//非常に移植もスムーズです。
+// 恐らく JavaScript -> JavaScriptより安全に移行できたかも知れません。
+// ちょっとバージョンアップ
 const sleep = '<break time="500ms"/>';
 exports.handler = function (event, context) {
     return __awaiter(this, void 0, void 0, function* () {
+        console.log(JSON.stringify(event));
         if (!skill) {
-            skill = Alexa.SkillBuilders.custom()
-                .addRequestHandlers(LaunchRequestHandler, HelpIntentHandler, StopIntentHandler, CancelIntentHandler, SessionEndedRequestHandler)
+            skill = Alexa.SkillBuilders.standard()
+                .addRequestHandlers(LaunchRequestHandler, InitIntentHandler, StartIntentHandler, YesIntentHandler, NoIntentHandler, HelpIntentHandler, StopIntentHandler, CancelIntentHandler, SessionEndedRequestHandler)
                 .addErrorHandlers(ErrorHandler)
+                .withTableName('BingoTableV2') // これを追加（テーブル名）
+                .withAutoCreateTable(true) //テーブル作成もスキルから行う場合は、これも追加
                 .create();
         }
         return skill.invoke(event, context);
@@ -34,11 +61,126 @@ const LaunchRequestHandler = {
         return handlerInput.requestEnvelope.request.type === 'LaunchRequest';
     },
     handle(handlerInput) {
-        //handlerInput.attributesManager  = states.GAME; TODO これが必要
-        const speechText = guideMessage();
+        return handlerInput.responseBuilder
+            .speak(guideMessage())
+            .reprompt(guideMessage())
+            .getResponse();
+    }
+};
+const InitIntentHandler = {
+    canHandle(handlerInput) {
+        return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+            && handlerInput.requestEnvelope.request.intent.name === 'InitIntent';
+    },
+    handle(handlerInput) {
+        let sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+        sessionAttributes.state = 'INIT';
+        handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
+        const speechText = '初期化すると全てのデータが失われます。初期化して宜しいですか？';
         return handlerInput.responseBuilder
             .speak(speechText)
             .reprompt(speechText)
+            .getResponse();
+    }
+};
+const StartIntentHandler = {
+    canHandle(handlerInput) {
+        return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+            && handlerInput.requestEnvelope.request.intent.name === 'StartIntent';
+    },
+    handle(handlerInput) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let attributes = yield getAttrbutes(handlerInput); // 取得
+            if (!attributes.array) {
+                attributes.array = createArray();
+                attributes.index = 0;
+                attributes.counter = 0;
+            }
+            let array = attributes.array;
+            let index = attributes.index;
+            let counter = Number(attributes.counter);
+            let speechText = drumMessage() + exclamationMessage();
+            speechText += '次の数字は、' + sleep + array[index] + 'です。' + sleep;
+            index += 1;
+            counter += 1;
+            if (counter % 3 == 0) {
+                speechText += '今までの数字を読み上げますか';
+            }
+            else {
+                speechText += guideMessage();
+            }
+            attributes.index = index;
+            attributes.counter = counter;
+            yield setAttrbutes(handlerInput, attributes); // 保存
+            return handlerInput.responseBuilder
+                .speak(speechText)
+                .reprompt(guideMessage())
+                .getResponse();
+        });
+    }
+};
+const YesIntentHandler = {
+    canHandle(handlerInput) {
+        return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+            && (handlerInput.requestEnvelope.request.intent.name === 'AMAZON.YesIntent' || handlerInput.requestEnvelope.request.intent.name === 'PreviousIntent');
+    },
+    handle(handlerInput) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let isInit = false;
+            // ステートの取得
+            let sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+            if (sessionAttributes.state == 'INIT') { // ステートの確認
+                isInit = true;
+            }
+            // ステートの初期化
+            sessionAttributes.state = '';
+            handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
+            if (isInit) {
+                let attributes = yield getAttrbutes(handlerInput); // 取得
+                attributes.array = createArray();
+                attributes.index = 0;
+                attributes.counter = 0;
+                yield setAttrbutes(handlerInput, attributes); // 保存
+                return handlerInput.responseBuilder
+                    .speak('初期化しました')
+                    .reprompt(guideMessage())
+                    .getResponse();
+            }
+            else {
+                let attributes = yield getAttrbutes(handlerInput); // 取得
+                let array = attributes.array;
+                let index = attributes.index;
+                let speechText = '';
+                if (index > 0) {
+                    speechText += '今まで出た数字は、';
+                    for (var i = 0; i < index; i++) {
+                        speechText += array[i] + '、';
+                    }
+                    speechText += '以上です。';
+                }
+                else {
+                    speechText += 'まだ、出た数字はありません。';
+                }
+                speechText += guideMessage();
+                attributes.counter = 0;
+                yield setAttrbutes(handlerInput, attributes); // 保存
+                return handlerInput.responseBuilder
+                    .speak(speechText)
+                    .reprompt(guideMessage())
+                    .getResponse();
+            }
+        });
+    }
+};
+const NoIntentHandler = {
+    canHandle(handlerInput) {
+        return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+            && handlerInput.requestEnvelope.request.intent.name === 'AMAZON.NoIntent';
+    },
+    handle(handlerInput) {
+        return handlerInput.responseBuilder
+            .speak(guideMessage())
+            .reprompt(guideMessage())
             .getResponse();
     }
 };
@@ -48,7 +190,6 @@ const HelpIntentHandler = {
             && handlerInput.requestEnvelope.request.intent.name === 'AMAZON.HelpIntent';
     },
     handle(handlerInput) {
-        //this.handler.state = ''; TODO これが必要
         const speechText = 'このスキルは、ビンゴゲームをするためのものです。「スタート」というと、次の数字を出します。また、「読み上げ」と言うと、いつでも、現在までの数字を読み上げます。ビンゴゲームを最初から始めるには「初期化して」と言って下さい。では、始めましょう。「ビンゴスタート」って言って下さい';
         return handlerInput.responseBuilder
             .speak(speechText)
@@ -62,7 +203,6 @@ const StopIntentHandler = {
             && handlerInput.requestEnvelope.request.intent.name === 'AMAZON.StopIntent';
     },
     handle(handlerInput) {
-        //this.handler.state = ''; TODO これが必要
         const speechText = '終了します。ゲームは記録されていますので、次回、続きから始められます。';
         return handlerInput.responseBuilder
             .speak(speechText)
@@ -75,7 +215,6 @@ const CancelIntentHandler = {
             && handlerInput.requestEnvelope.request.intent.name === 'AMAZON.CancelIntent';
     },
     handle(handlerInput) {
-        //this.handler.state = ''; TODO これが必要
         const speechText = 'キャンセルします。ゲームは記録されていますので、次回、続きから始められます。';
         return handlerInput.responseBuilder
             .speak(speechText)
@@ -87,9 +226,7 @@ const SessionEndedRequestHandler = {
         return handlerInput.requestEnvelope.request.type === 'SessionEndedRequest';
     },
     handle(handlerInput) {
-        // 		this.emit(':saveState', true);
-        return handlerInput.responseBuilder // TODO これでいいのか？
-            .getResponse();
+        return handlerInput.responseBuilder.getResponse();
     }
 };
 const ErrorHandler = {
@@ -97,11 +234,24 @@ const ErrorHandler = {
         return true;
     },
     handle(handlerInput, error) {
+        console.log('ERROR' + error.message);
         return handlerInput.responseBuilder
-            .speak('エラーが発生しました')
             .getResponse();
     }
 };
+// 永続化情報の取得
+function getAttrbutes(handlerInput) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return yield handlerInput.attributesManager.getPersistentAttributes();
+    });
+}
+// 永続化情報の保存
+function setAttrbutes(handlerInput, attributes) {
+    return __awaiter(this, void 0, void 0, function* () {
+        handlerInput.attributesManager.setPersistentAttributes(attributes);
+        yield handlerInput.attributesManager.savePersistentAttributes();
+    });
+}
 function guideMessage() {
     const starts = ['次行ってみよー', 'スタート', 'ビンゴスタート', '次'];
     const previous = ['読み上げ', '出た数字を教えて', '今までの数字を教えて', '読み上げ'];
@@ -199,108 +349,4 @@ function createArray() {
     }
     return array;
 }
-/*
-const Alexa = require('alexa-sdk');
-exports.handler = function(event, context, callback) {
-    console.log(JSON.stringify(event));
-    const alexa = Alexa.handler(event, context);
-    alexa.dynamoDBTableName = 'BingoTable';
-    alexa.registerHandlers(handlers, gameHandlers, initHandlers);
-    alexa.execute();
-};
-
-
-
-// const handlers = {
-// 	'Unhandled': function () {
-// 		this.handler.state = states.GAME;
-// 		this.emitWithState('LaunchRequest');
-// 	},
-// 	'SessionEndedRequest': function () {
-// 		this.emit(':saveState', true);
-// 	},
-// 	'AMAZON.HelpIntent' : function() {
-// 		this.handler.state = states.GAME;
-// 		this.emit(':ask', 'このスキルは、ビンゴゲームをするためのものです。「スタート」というと、次の数字を出します。また、「読み上げ」と言うと、いつでも、現在までの数字を読み上げます。ビンゴゲームを最初から始めるには「初期化して」と言って下さい。では、始めましょう。「ビンゴスタート」って言って下さい');
-// 	},
-// 	'AMAZON.StopIntent' : function() {
-// 		this.emit(':tell', '終了します。ゲームは記録されていますので、次回、続きから始められます。');
-// 	},
-// 	'AMAZON.CancelIntent' : function() {
-// 		this.emit(':tell', 'キャンセルします。ゲームは記録されていますので、次回、続きから始められます。');
-// 	}
-// };
-
-
-const gameHandlers = Alexa.CreateStateHandler(states.GAME, {
-    // 'LaunchRequest': function () {
-    // 	this.emit(':ask', guideMessage());
-    // },
-    'InitIntent' : function() {
-        this.handler.state = states.INIT;
-        let output = '初期化すると全てのデータが失われます。初期化して宜しいですか？';
-        this.emit(':ask', output, guideMessage());
-    },
-    'StartIntent' : function() {
-        this.handler.state = states.GAME;
-        if(!this.attributes[keyArray]) {
-            this.attributes[keyArray] = createArray();
-            this.attributes[keyIndex] = 0;
-            this.attributes[keyCounter] = 0;
-        }
-        
-        let array = this.attributes[keyArray];
-        let index = this.attributes[keyIndex];
-        let counter = Number(this.attributes[keyCounter]);
-
-        let output = drumMessage() + exclamationMessage();
-        output += '次の数字は、' + sleep + array[index] + 'です。' + sleep;
-        index += 1;
-        counter += 1;
-        if (counter % 3 == 0) {
-            output += '今までの数字を読み上げますか';
-        } else {
-            output += guideMessage();
-        }
-        this.attributes[keyIndex] = index;
-        this.attributes[keyCounter] = counter;
-
-        this.emit(':ask', output, guideMessage());
-    },
-    'AMAZON.YesIntent' : function() {
-        let array = this.attributes[keyArray];
-        let index = this.attributes[keyIndex];
-        
-        let output = '今まで出た数字は、';
-        for(var i=0; i < index; i++) {
-            output += array[i] + '、';
-        }
-        output += '以上です。' + guideMessage();
-        this.attributes[keyCounter] = 0;
-        this.emit(':ask', output, guideMessage());
-    },
-    'AMAZON.NoIntent' : function() {
-        this.emit(':ask', guideMessage(), guideMessage());
-    },
-    'PreviousIntent' : function() {
-        this.emitWithState('AMAZON.YesIntent');
-    },
-});
-
-const initHandlers = Alexa.CreateStateHandler(states.INIT, {
-    'AMAZON.YesIntent' : function() {
-        this.attributes[keyArray] = createArray();
-        this.attributes[keyIndex] = 0;
-        this.attributes[keyCounter] = 0;
-        this.handler.state = states.GAME;
-        this.emit(':tell', '初期化しました');
-    },
-    'Unhandled': function () {
-        this.handler.state = states.GAME;
-        this.emit(':ask', guideMessage(), guideMessage());
-    },
-});
-
-
-*/ 
 //# sourceMappingURL=index.js.map
