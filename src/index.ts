@@ -11,6 +11,7 @@ exports.handler = async function (event: RequestEnvelope, context: any) {
 	console.log(JSON.stringify(event));
 	if (!skill) {
 		skill = Alexa.SkillBuilders.standard()
+			.addRequestInterceptors(RequestInterceptor)
 		  	.addRequestHandlers(
 				LaunchRequestHandler,
 				InitIntentHandler,
@@ -29,7 +30,21 @@ exports.handler = async function (event: RequestEnvelope, context: any) {
 	}
 	return skill.invoke(event,　context);
 }
- 
+
+const RequestInterceptor = {
+    process(handlerInput: Alexa.HandlerInput) {
+		if(handlerInput.requestEnvelope.request.type === 'IntentRequest'
+		&& handlerInput.requestEnvelope.request.intent.name === 'AMAZON.YesIntent'){
+			// 処理しない
+		} else {
+			// ステートの削除
+			let sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+			sessionAttributes.state = '';
+			handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
+		}
+    }
+};
+
 const LaunchRequestHandler: Alexa.RequestHandler = {
     canHandle(handlerInput: Alexa.HandlerInput) {
       	return handlerInput.requestEnvelope.request.type === 'LaunchRequest';

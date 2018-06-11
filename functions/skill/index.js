@@ -16,6 +16,7 @@ exports.handler = function (event, context) {
         console.log(JSON.stringify(event));
         if (!skill) {
             skill = Alexa.SkillBuilders.standard()
+                .addRequestInterceptors(RequestInterceptor)
                 .addRequestHandlers(LaunchRequestHandler, InitIntentHandler, StartIntentHandler, AgainIntentHandler, YesIntentHandler, NoIntentHandler, HelpIntentHandler, StopIntentHandler, CancelIntentHandler, SessionEndedRequestHandler)
                 .addErrorHandlers(ErrorHandler)
                 .withTableName('BingoTableV2') // これを追加（テーブル名）
@@ -24,6 +25,20 @@ exports.handler = function (event, context) {
         }
         return skill.invoke(event, context);
     });
+};
+const RequestInterceptor = {
+    process(handlerInput) {
+        if (handlerInput.requestEnvelope.request.type === 'IntentRequest'
+            && handlerInput.requestEnvelope.request.intent.name === 'AMAZON.YesIntent') {
+            // 処理しない
+        }
+        else {
+            // ステートの削除
+            let sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+            sessionAttributes.state = '';
+            handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
+        }
+    }
 };
 const LaunchRequestHandler = {
     canHandle(handlerInput) {
