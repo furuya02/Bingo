@@ -10,49 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const Alexa = require("ask-sdk");
 let skill;
-// ■大きく変わったのはステートとアトリビュートの実装
-// ステートの扱い方
-// ステートによって処理が違うのは、AMAZON.YesIntentだけなので、
-//YesIntentは、STATEによって違うハンドラを用意する　共に最後にSTATは消しておく
-//InitIntentでstates.INITを入れる
-// Stop Cancel Helpなどステートごとに複数書いていたハンドラは全部共通化しました。
-// セッションアトリビュートの扱い
-// 計画に別れた
-// // 永続化情報の取得
-// async function getAttrbutes(handlerInput: Alexa.HandlerInput):Promise<{[key: string]: any}> {
-// 	return await handlerInput.attributesManager.getPersistentAttributes();
-// }
-// // 永続化情報の保存
-// async function setAttrbutes(handlerInput: Alexa.HandlerInput, attributes:{[key: string]: any}): Promise<void> {
-// 	handlerInput.attributesManager.setPersistentAttributes(attributes);
-// 	await handlerInput.attributesManager.savePersistentAttributes();
-// }
-// 下記で挟む
-// let attributes = await getAttrbutes(handlerInput); // 取得
-// await setAttrbutes(handlerInput, attributes); // 保存
-// STATEだけセッション情報にした
-// let sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
-// sessionAttributes.state = 'INIT';
-// handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
-// 変数名の間違いがエラーとなるのはもちろん
-//未使用の変数や関数でワーニング表示されたり
-//型の不一致がエラーとなったり
-// null undefinedとなる可能性のあるデータを参照していたりするとワーニングが発生する
-//非常に移植もスムーズです。
-// 恐らく JavaScript -> JavaScriptより安全に移行できたかも知れません。
-// ちょっとバージョンアップ
-//AgainIntent
-// alexを使っている場合
-// {
-// 	"name": "bingo_v2",
-// 	"description": "bingo_v2",
-// 	"memory": 128,
-// 	"timeout": 5,
-// 	"runtime": "nodejs8.10",
-// 	"role": "arn:aws:iam::275317300001:role/bingo_lambda_function",
-// 	"handler": "index.handler",
-// 	"environment": {}
-//   }
 const sleep = '<break time="500ms"/>';
 exports.handler = function (event, context) {
     return __awaiter(this, void 0, void 0, function* () {
