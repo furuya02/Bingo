@@ -162,8 +162,7 @@ const YesIntentHandler: Alexa.RequestHandler = {
 			await setAttrbutes(handlerInput, attributes); // 保存
 
 			return handlerInput.responseBuilder
-				.speak('初期化しました。'+ guideMessage())
-				.reprompt(guideMessage())
+				.speak('初期化しました')
 				.getResponse();
 
 		} else {
