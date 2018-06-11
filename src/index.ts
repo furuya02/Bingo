@@ -128,6 +128,7 @@ const AgainIntentHandler: Alexa.RequestHandler = {
 		} else {
 			speechText += 'まだ、一回も数字が出ていません';
 		}
+		speechText += guideMessage();
 	
 		return handlerInput.responseBuilder
 			.speak(speechText)
@@ -161,7 +162,7 @@ const YesIntentHandler: Alexa.RequestHandler = {
 			await setAttrbutes(handlerInput, attributes); // 保存
 
 			return handlerInput.responseBuilder
-				.speak('初期化しました')
+				.speak('初期化しました。'+ guideMessage())
 				.reprompt(guideMessage())
 				.getResponse();
 
@@ -207,6 +208,7 @@ const NoIntentHandler: Alexa.RequestHandler = {
 			.getResponse();
 	}
 };
+
 
 const HelpIntentHandler: Alexa.RequestHandler = {
 	canHandle(handlerInput: Alexa.HandlerInput) {

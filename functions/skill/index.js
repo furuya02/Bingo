@@ -119,6 +119,7 @@ const AgainIntentHandler = {
             else {
                 speechText += 'まだ、一回も数字が出ていません';
             }
+            speechText += guideMessage();
             return handlerInput.responseBuilder
                 .speak(speechText)
                 .reprompt(guideMessage())
@@ -149,7 +150,7 @@ const YesIntentHandler = {
                 attributes.counter = 0;
                 yield setAttrbutes(handlerInput, attributes); // 保存
                 return handlerInput.responseBuilder
-                    .speak('初期化しました')
+                    .speak('初期化しました。' + guideMessage())
                     .reprompt(guideMessage())
                     .getResponse();
             }
