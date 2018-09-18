@@ -8,7 +8,6 @@ let skill: Alexa.Skill;
 const sleep = '<break time="500ms"/>';
 
 exports.handler = async function (event: RequestEnvelope, context: any) {
-	console.log(JSON.stringify(event));
 	if (!skill) {
 		skill = Alexa.SkillBuilders.standard()
 			.addRequestInterceptors(RequestInterceptor)
@@ -259,7 +258,7 @@ const SessionEndedRequestHandler: Alexa.RequestHandler = {
 };
 
 const ErrorHandler: Alexa.ErrorHandler  = {
-  canHandle(handlerInput: Alexa.HandlerInput, error: Error) {
+  canHandle(_handlerInput: Alexa.HandlerInput, _error: Error) {
       return true;
   },
   handle(handlerInput: Alexa.HandlerInput, error: Error) {

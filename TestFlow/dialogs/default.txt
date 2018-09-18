@@ -1,0 +1,16 @@
+LaunchRequest
+AMAZON.HelpIntent
+InitIntent
+AMAZON.NoIntent
+InitIntent
+AMAZON.YesIntent
+StartIntent
+StartIntent
+AgainIntent
+StartIntent
+AMAZON.YesIntent
+AMAZON.StopIntent
+AMAZON.CancelIntent
+
+
+

@@ -13,7 +13,6 @@ let skill;
 const sleep = '<break time="500ms"/>';
 exports.handler = function (event, context) {
     return __awaiter(this, void 0, void 0, function* () {
-        console.log(JSON.stringify(event));
         if (!skill) {
             skill = Alexa.SkillBuilders.standard()
                 .addRequestInterceptors(RequestInterceptor)
@@ -237,7 +236,7 @@ const SessionEndedRequestHandler = {
     }
 };
 const ErrorHandler = {
-    canHandle(handlerInput, error) {
+    canHandle(_handlerInput, _error) {
         return true;
     },
     handle(handlerInput, error) {
